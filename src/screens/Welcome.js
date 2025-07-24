@@ -7,47 +7,41 @@ import {
     TouchableOpacity,
     Animated,
 } from 'react-native';
-import colors from '../constants/colors';
-import dimensions from '../constants/dimensions';
 import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import dimensions from '../constants/dimensions';
 
 const Welcome = () => {
     const logoAnim = useRef(new Animated.Value(0)).current;
     const textAnim = useRef(new Animated.Value(0)).current;
     const buttonAnim = useRef(new Animated.Value(0)).current;
-
-
     const navigation = useNavigation();
 
     useEffect(() => {
-        // Animate logo first, then title & subtitle, then button
         Animated.sequence([
             Animated.timing(logoAnim, {
                 toValue: 1,
-                duration: 800,
+                duration: 900,
                 useNativeDriver: true,
             }),
             Animated.timing(textAnim, {
                 toValue: 1,
-                duration: 1000,
+                duration: 900,
                 useNativeDriver: true,
             }),
             Animated.timing(buttonAnim, {
                 toValue: 1,
-                duration: 1000,
+                duration: 900,
                 useNativeDriver: true,
             }),
         ]).start();
-    }, [logoAnim, textAnim, buttonAnim]);
+    }, []);
 
-    // functions
-    const redirect = () =>{
-        navigation.navigate('SelectLanguage');
-    }
+    const redirect = () => navigation.navigate('Login');
+
     return (
         <View style={styles.container}>
-            {/* Logo Animation */}
+            {/* Logo */}
             <Animated.View
                 style={[
                     styles.logoContainer,
@@ -57,7 +51,7 @@ const Welcome = () => {
                             {
                                 scale: logoAnim.interpolate({
                                     inputRange: [0, 1],
-                                    outputRange: [0.5, 1],
+                                    outputRange: [0.8, 1],
                                 }),
                             },
                         ],
@@ -70,7 +64,7 @@ const Welcome = () => {
                 />
             </Animated.View>
 
-            {/* Title & Subtitle Animation */}
+            {/* Title and Subtitle */}
             <Animated.View
                 style={[
                     styles.textContainer,
@@ -80,20 +74,23 @@ const Welcome = () => {
                             {
                                 translateY: textAnim.interpolate({
                                     inputRange: [0, 1],
-                                    outputRange: [20, 0],
+                                    outputRange: [30, 0],
                                 }),
                             },
                         ],
                     },
                 ]}
             >
-                <Text style={styles.title}>KisaanDada.ai</Text>
+                <Text style={styles.title}>
+                    <Text style={styles.titleOrange}>KrishiSaarathi</Text>
+                    <Text style={styles.titleDot}>.ai</Text>
+                </Text>
                 <Text style={styles.subtitle}>
                     Guiding Farmers with the Power of Intelligence.
                 </Text>
             </Animated.View>
 
-            {/* Button Animation */}
+            {/* Get Started Button */}
             <Animated.View
                 style={[
                     styles.buttonContainer,
@@ -103,16 +100,18 @@ const Welcome = () => {
                             {
                                 translateY: buttonAnim.interpolate({
                                     inputRange: [0, 1],
-                                    outputRange: [80, 0], // moved button bit up
+                                    outputRange: [60, 0],
                                 }),
                             },
                         ],
                     },
                 ]}
             >
-                <TouchableOpacity style={styles.button} onPress={redirect}>
+                <TouchableOpacity style={styles.button} onPress={redirect} activeOpacity={0.82}>
                     <Text style={styles.buttonText}>Get Started</Text>
-                    <AntDesign name="arrowright" size={24} color={colors.white} />
+                    <View style={styles.iconCircle}>
+                        <AntDesign name="arrowright" size={24} color="#367165" />
+                    </View>
                 </TouchableOpacity>
             </Animated.View>
         </View>
@@ -122,58 +121,83 @@ const Welcome = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.primary,
+        backgroundColor: '#367165', // dark green
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: -80
+        paddingHorizontal: 16,
     },
     logoContainer: {
+        marginTop: 40,
         alignItems: 'center',
+        marginBottom: 32,
     },
     logo: {
-        width: dimensions.width * 0.5,
-        height: dimensions.width * 0.5,
+        width: dimensions.width * 0.48,
+        height: dimensions.width * 0.48,
         resizeMode: 'contain',
     },
     textContainer: {
         alignItems: 'center',
-        marginVertical: 20,
+        marginBottom: 80,
     },
     title: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: colors.secondary,
+        textAlign: 'center',
+    },
+    titleOrange: {
+        color: '#F7CB46', // gold/yellow for brand
+        fontWeight: 'bold',
+        fontSize: 32,
+    },
+    titleDot: {
+        color: '#222',
+        fontSize: 32,
+        fontWeight: 'bold',
     },
     subtitle: {
         fontSize: 16,
-        color: colors.white,
-        marginTop: 10,
+        color: '#fff',
+        marginTop: 14,
         textAlign: 'center',
-        paddingHorizontal: 20,
+        fontWeight: '400',
     },
     buttonContainer: {
+        width: '100%',
+        alignItems: 'center',
         position: 'absolute',
-        bottom: 120, 
+        bottom: 90,
     },
     button: {
-        backgroundColor: colors.buttonGreen,
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 30,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        backgroundColor: '#3E8577', // light green
+        paddingVertical: 16,
+        paddingHorizontal: 32,
+        borderRadius: 30,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.18,
+        shadowRadius: 18,
+        elevation: 12,
         width: dimensions.width * 0.8,
-        elevation: 10,
-        shadowColor: colors.black,
-        shadowOffset: { width: 0, height: 5 },
-        shadowOpacity: 0.34,
-        shadowRadius: 6.27,
+        justifyContent: 'center',
     },
     buttonText: {
-        fontSize: 18,
+        color: '#fff',
         fontWeight: 'bold',
-        color: colors.white,
+        fontSize: 20,
+        flex: 1,
+        textAlign: 'center',
+    },
+    iconCircle: {
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        width: 36,
+        height: 36,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: 12,
     },
 });
 

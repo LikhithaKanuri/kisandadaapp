@@ -6,32 +6,38 @@ import {
     ImageBackground,
     TouchableOpacity,
     StatusBar,
+    Dimensions,
     FlatList,
+    Platform,
 } from 'react-native';
-import colors from '../constants/colors';
-import dimensions from '../constants/dimensions';
+import { useNavigation } from '@react-navigation/native';
 
-const languages = ['English', 'Hindi', 'Kannada']; // Array of languages
+const { width, height } = Dimensions.get('window');
+const IMAGE_HEIGHT = height * 0.55; // Taller image for more coverage
+const languages = ['English', 'Hindi', 'Kannada'];
 
 const SelectLanguage = () => {
-    const [selectedLanguage, setSelectedLanguage] = useState('English'); // Default to English
+    const navigation = useNavigation();
+    const [selectedLanguage, setSelectedLanguage] = useState('English');
 
     const handleLanguageSelect = (language) => {
         setSelectedLanguage(language);
+        navigation.navigate("Chatbot"); // Uncomment to navigate on selection
     };
 
     const renderLanguageButton = ({ item }) => (
         <TouchableOpacity
             style={[
                 styles.languageButton,
-                selectedLanguage === item && styles.selectedButton,
+                selectedLanguage === item && styles.selectedButton
             ]}
             onPress={() => handleLanguageSelect(item)}
+            activeOpacity={0.9}
         >
             <Text
                 style={[
                     styles.buttonText,
-                    selectedLanguage === item && styles.selectedButtonText,
+                    selectedLanguage === item && styles.selectedButtonText
                 ]}
             >
                 {item}
@@ -42,27 +48,28 @@ const SelectLanguage = () => {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+            {/* IMAGE WITH WELCOME TEXT INSIDE */}
             <ImageBackground
                 source={require('../assets/welcome.jpeg')}
                 style={styles.backgroundImage}
             >
-                <View style={styles.overlay} />
-                <View style={styles.topContent}>
+                <View style={styles.textOnImage}>
                     <Text style={styles.welcomeText}>WELCOME</Text>
                     <Text style={styles.letsGetStartedText}>Let's Get Started</Text>
                 </View>
-
-                <View style={styles.bottomSheet}>
-                    <Text style={styles.chooseLanguageText}>Choose Language</Text>
-                    <FlatList
-                        data={languages}
-                        keyExtractor={(item) => item}
-                        renderItem={renderLanguageButton}
-                        contentContainerStyle={styles.languageList}
-                        showsVerticalScrollIndicator={false}
-                    />
-                </View>
             </ImageBackground>
+
+            {/* WHITE BOTTOM SHEET */}
+            <View style={styles.bottomSheet}>
+                <Text style={styles.chooseLanguageText}>Choose Language</Text>
+                <FlatList
+                    data={languages}
+                    keyExtractor={(item) => item}
+                    renderItem={renderLanguageButton}
+                    contentContainerStyle={styles.languageList}
+                    showsVerticalScrollIndicator={false}
+                />
+            </View>
         </View>
     );
 };
@@ -70,68 +77,90 @@ const SelectLanguage = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: 'white', // NO GREEN background here!
     },
     backgroundImage: {
-        flex: 1,
+        width: '100%',
+        height: IMAGE_HEIGHT,
         resizeMode: 'cover',
         justifyContent: 'flex-end',
     },
-    overlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.4)', // Dark overlay
-    },
-    topContent: {
+    textOnImage: {
         position: 'absolute',
-        top: dimensions.height * 0.35, // Moved up a bit
-        left: 20,
-        marginTop:40
+        bottom: Platform.OS === 'ios' ? 28 : 16, // a bit above the bottom of image
+        left: width * 0.06,
+        zIndex: 2,
     },
     welcomeText: {
-        fontSize: 48,
+        fontSize: width * 0.11,
         fontWeight: 'bold',
-        color: colors.white,
+        color: '#fff',
+        letterSpacing: 1.2,
+        fontFamily: 'serif',
+        textAlign: 'left',
+        textShadowColor: 'rgba(0,0,0,0.18)',
+        textShadowOffset: { width: 2, height: 3 },
+        textShadowRadius: 8,
     },
     letsGetStartedText: {
-        fontSize: 18,
-        color: colors.white,
-        marginTop: 5,
+        fontSize: width * 0.05,
+        color: '#fff',
+        marginTop: 4,
+        fontFamily: 'serif',
+        textAlign: 'left',
+        textShadowColor: 'rgba(0,0,0,0.13)',
+        textShadowOffset: { width: 1, height: 2 },
+        textShadowRadius: 6,
     },
     bottomSheet: {
-        backgroundColor: colors.lightGray,
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        paddingVertical: 60, // reduced padding to move content up
-        // paddingHorizontal: 30,
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 38,
+        borderTopRightRadius: 38,
+        width: '100%',
+        paddingVertical: height * 0.045,
+        paddingHorizontal: width * 0.08,
         alignItems: 'center',
+        position: 'absolute',
+        bottom: 0,
+        minHeight: height * 0.45,
+        zIndex: 3,
     },
     chooseLanguageText: {
-        fontSize: 20,
+        fontSize: width * 0.053,
         fontWeight: 'bold',
-        color: colors.black,
-        marginBottom: 10, // reduced for compactness
+        color: '#222',
+        marginBottom: height * 0.02,
+        fontFamily: 'serif',
     },
     languageList: {
         alignItems: 'center',
-        paddingBottom: 20,
     },
     languageButton: {
-        backgroundColor: colors.gray,
-        paddingVertical: 15,
-        borderRadius: 30,
-        width: dimensions.width * 0.8,
-        marginVertical: 8,
+        backgroundColor: '#E8E8E8',
+        paddingVertical: height * 0.017,
+        borderRadius: 26,
+        width: width * 0.6,
+        marginVertical: height * 0.012,
         alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.10,
+        shadowRadius: 3,
+        elevation: 2,
     },
     selectedButton: {
-        backgroundColor: colors.primary,
+        backgroundColor: '#3E8577',
     },
     buttonText: {
-        fontSize: 18,
+        fontSize: width * 0.047,
         fontWeight: 'bold',
-        color: colors.darkGray,
+        color: '#222',
+        fontFamily: 'serif',
+        letterSpacing: 0.3,
     },
     selectedButtonText: {
-        color: colors.white,
+        color: '#fff',
     },
 });
 

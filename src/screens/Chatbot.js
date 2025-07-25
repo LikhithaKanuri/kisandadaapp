@@ -59,17 +59,17 @@ const Chatbot = () => {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.headerButton}>
-              <Image style={styles.headerButtonImage} source={require('../../src/assets/list.png')} />
+              <Image style={styles.headerButtonImage} source={require('../../assets/list.png')} />
             </TouchableOpacity>
             <View style={styles.headerLogoContainer}>
-              <Image style={styles.headerLogo} source={require('../../src/assets/applogo1.png')} />
+              <Image style={styles.headerLogo} source={require('../../assets/applogo1.png')} />
               <Text style={styles.headerLogoText}>
                 <Text style={styles.headerLogoTextMain}>KisanDada</Text>
                 <Text style={styles.headerLogoTextDot}>.ai</Text>
               </Text>
             </View>
             <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Options')}>
-              <Image style={styles.headerButtonImage} source={require('../../src/assets/settings.png')} />
+              <Image style={styles.headerButtonImage} source={require('../../assets/settings.png')} />
             </TouchableOpacity>
           </View>
 
@@ -100,13 +100,13 @@ const Chatbot = () => {
                 placeholderTextColor="#C0C0C0"
               />
               <TouchableOpacity style={styles.inputIconButton} onPress={handleSend}>
-                <Image style={styles.inputIcon} source={require('../../src/assets/send.png')} />
+                <Image style={styles.inputIcon} source={require('../../assets/send.png')} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.inputIconButton}>
-                <Image style={styles.inputIcon} source={require('../../src/assets/camera.png')} />
+                <Image style={styles.inputIcon} source={require('../../assets/camera.png')} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.inputIconButton}>
-                <Image style={styles.inputIcon} source={require('../../src/assets/mic.png')} />
+                <Image style={styles.inputIcon} source={require('../../assets/mic.png')} />
               </TouchableOpacity>
             </View>
           </View>
@@ -114,10 +114,10 @@ const Chatbot = () => {
           {/* Footer bar */}
           <View style={styles.tabArea}>
             <TouchableOpacity style={styles.tabAreaButton}>
-              <Image style={styles.tabAreaButtonImage} source={require('../../src/assets/chat.png')} />
+              <Image style={styles.tabAreaButtonImage} source={require('../../assets/chat.png')} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.tabAreaButton} onPress={() => navigation.navigate('VoiceInteraction')}>
-              <Image style={styles.tabAreaButtonImage} source={require('../../src/assets/profile.png')} />
+              <Image style={styles.tabAreaButtonImage} source={require('../../assets/profile.png')} />
             </TouchableOpacity>
           </View>
         </View>

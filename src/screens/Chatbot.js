@@ -12,12 +12,14 @@ import {
   Image,
   SafeAreaView,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
+  const navigation = useNavigation();
 
   const handleSend = () => {
     if (inputText.trim() !== '') {
@@ -114,7 +116,7 @@ const Chatbot = () => {
             <TouchableOpacity style={styles.tabAreaButton}>
               <Image style={styles.tabAreaButtonImage} source={require('../../src/assets/chat.png')} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.tabAreaButton}>
+            <TouchableOpacity style={styles.tabAreaButton} onPress={() => navigation.navigate('VoiceInteraction')}>
               <Image style={styles.tabAreaButtonImage} source={require('../../src/assets/profile.png')} />
             </TouchableOpacity>
           </View>

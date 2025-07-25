@@ -5,6 +5,7 @@ import Welcome from '../screens/Welcome';
 import SelectLanguage from '../screens/SelectLanguage';
 import LoginScreen from '../screens/LoginScreen';
 import Chatbot from '../screens/Chatbot'; // Import Chatbot
+import VoiceInteractionScreen from '../screens/VoiceInteractionScreen';
 
 const Stack = createStackNavigator();
 
@@ -16,6 +17,7 @@ const AppNavigator = () => {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="SelectLanguage" component={SelectLanguage} />
         <Stack.Screen name="Chatbot" component={Chatbot} />{/* Add Chatbot Screen */}
+         <Stack.Screen name="VoiceInteraction" component={VoiceInteractionScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

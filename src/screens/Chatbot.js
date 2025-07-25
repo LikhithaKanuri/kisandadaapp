@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,27 +11,121 @@ import {
   Platform,
   Image,
   SafeAreaView,
+  Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { AntDesign } from '@expo/vector-icons';
+import * as Speech from 'expo-speech';
 
 const { width, height } = Dimensions.get('window');
+
+const TypingIndicator = () => {
+  const dotAnims = useRef([new Animated.Value(0), new Animated.Value(0), new Animated.Value(0)])
+    .current;
+
+  useEffect(() => {
+    const createAnimation = (anim, delay) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, { toValue: 1, duration: 300, delay, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0, duration: 300, useNativeDriver: true }),
+        ])
+      );
+    };
+
+    const animations = dotAnims.map((anim, i) => createAnimation(anim, i * 300));
+    animations.forEach((anim) => anim.start());
+
+    return () => animations.forEach((anim) => anim.stop());
+  }, []);
+
+  return (
+    <View style={styles.typingContainer}>
+      {dotAnims.map((anim, i) => (
+        <Animated.View
+          key={i}
+          style={[styles.typingDot, { transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [0, -5] }) }] }]}
+        />
+      ))}
+    </View>
+  );
+};
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState(null);
   const navigation = useNavigation();
+  const flatListRef = useRef(null);
+
+  useEffect(() => {
+    const getVoice = async () => {
+      const voices = await Speech.getAvailableVoicesAsync();
+      const voice = voices.find(v => v.language === 'en-GB' && v.name.includes('male')) || voices.find(v => v.language === 'en-US' && v.name.includes('male')) || null;
+      setSelectedVoice(voice?.identifier);
+    };
+    getVoice();
+  }, []);
+
+  const handleFeedback = (messageId, feedbackType) => {
+    setMessages(prevMessages =>
+      prevMessages.map(msg => {
+        if (msg.id === messageId) {
+          const newFeedback = msg.feedback === feedbackType ? null : feedbackType;
+          console.log(`Feedback for message ${messageId}: ${newFeedback}`);
+          return { ...msg, feedback: newFeedback };
+        }
+        return msg;
+      })
+    );
+  };
+
+  const handleSelectQuestion = (question) => {
+    setInputText(question);
+  };
 
   const handleSend = () => {
-    if (inputText.trim() !== '') {
-      const newMessage = { text: inputText.trim(), sender: 'user' };
-      setMessages([...messages, newMessage]);
-      setInputText('');
-      // Simulate bot response
+    if (inputText.trim() === '' || isLoading) return;
+
+    const newMessage = { id: Date.now(), text: inputText.trim(), sender: 'user' };
+    setMessages((prev) => [...prev, newMessage]);
+    setInputText('');
+    setIsLoading(true);
+
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+
+    setTimeout(() => {
+      const botMessage = {
+        id: Date.now() + 1,
+        text: `This is a simulated response to: "${newMessage.text}"`,
+        sender: 'bot',
+        feedback: null, // Initial feedback state
+      };
+      setMessages((prev) => [...prev, botMessage]);
+      setIsLoading(false);
       setTimeout(() => {
-        const botMessage = { text: `Echo: ${inputText.trim()}`, sender: 'bot' };
-        setMessages([...messages, newMessage, botMessage]);
-      }, 500);
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }, 2500);
+  };
+
+  const handleSpeak = async (text) => {
+    if (isSpeaking) {
+      await Speech.stop();
     }
+    const options = {
+        voice: selectedVoice,
+        pitch: 0.9,
+        rate: 0.8,
+        onStart: () => setIsSpeaking(true),
+        onDone: () => setIsSpeaking(false),
+        onError: () => setIsSpeaking(false),
+    };
+    Speech.speak(text, options);
   };
 
   const suggestedQuestions = [
@@ -41,253 +135,280 @@ const Chatbot = () => {
   ];
 
   const renderSuggestedQuestion = ({ item }) => (
-    <TouchableOpacity style={styles.suggestedQuestionButton}>
+    <TouchableOpacity style={styles.suggestedQuestionButton} onPress={() => handleSelectQuestion(item)}>
       <Text style={styles.suggestedQuestionText}>{item}</Text>
     </TouchableOpacity>
   );
 
-  const styles = createStyles();
+  const renderMessage = ({ item }) => (
+    <View style={[styles.messageRow, item.sender === 'bot' ? styles.botRow : styles.userRow]}>
+        <View style={[styles.message, item.sender === 'bot' ? styles.botMessage : styles.userMessage]}>
+          <Text style={styles.messageText}>{item.text}</Text>
+        </View>
+        {item.sender === 'bot' && (
+            <View style={styles.iconActions}>
+                <TouchableOpacity onPress={() => handleSpeak(item.text)}>
+                    <AntDesign name="sound" size={22} color={isSpeaking ? '#F7CB46' : '#E0E0E0'} style={styles.actionIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleFeedback(item.id, 'liked')}>
+                    <AntDesign name="like1" size={20} color={item.feedback === 'liked' ? '#F7CB46' : '#E0E0E0'} style={styles.actionIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleFeedback(item.id, 'disliked')}>
+                    <AntDesign name="dislike1" size={20} color={item.feedback === 'disliked' ? '#F7CB46' : '#E0E0E0'} style={styles.actionIcon} />
+                </TouchableOpacity>
+            </View>
+        )}
+    </View>
+  );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: styles.container.backgroundColor }}>
+    <SafeAreaView style={styles.safeContainer}>
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
       >
-        <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.headerButton}>
-              <Image style={styles.headerButtonImage} source={require('../../assets/list.png')} />
-            </TouchableOpacity>
-            <View style={styles.headerLogoContainer}>
-              <Image style={styles.headerLogo} source={require('../../assets/applogo1.png')} />
-              <Text style={styles.headerLogoText}>
-                <Text style={styles.headerLogoTextMain}>KisanDada</Text>
-                <Text style={styles.headerLogoTextDot}>.ai</Text>
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Options')}>
-              <Image style={styles.headerButtonImage} source={require('../../assets/settings.png')} />
-            </TouchableOpacity>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity>
+            <Image style={styles.headerButtonImage} source={require('../../assets/list.png')} />
+          </TouchableOpacity>
+          <View style={styles.headerLogoContainer}>
+            <Image style={styles.headerLogo} source={require('../../assets/applogo1.png')} />
+            <Text style={styles.headerLogoText}>
+              <Text style={styles.headerLogoTextMain}>KisanDada</Text>
+              <Text style={styles.headerLogoTextDot}>.ai</Text>
+            </Text>
           </View>
+          <TouchableOpacity onPress={() => navigation.navigate('Options')}>
+            <Image style={styles.headerButtonImage} source={require('../../assets/settings.png')} />
+          </TouchableOpacity>
+        </View>
 
-          {/* Suggested questions */}
-          <FlatList
-            data={suggestedQuestions}
-            renderItem={renderSuggestedQuestion}
-            keyExtractor={(item, idx) => idx.toString()}
-            style={styles.suggestedQuestionsList}
-            contentContainerStyle={styles.suggestedQuestionsContent}
-            showsVerticalScrollIndicator={false}
+        {/* Content Area */}
+        <View style={styles.contentArea}>
+          {messages.length === 0 ? (
+            <FlatList
+              data={suggestedQuestions}
+              renderItem={renderSuggestedQuestion}
+              keyExtractor={(item, idx) => `sq-${idx}`}
+              contentContainerStyle={styles.suggestedQuestionsContent}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <FlatList
+              ref={flatListRef}
+              data={messages}
+              renderItem={renderMessage}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={styles.messagesContainer}
+              ListFooterComponent={isLoading ? (
+                <View style={[styles.messageRow, styles.botRow]}>
+                  <View style={[styles.message, styles.botMessage, styles.loadingContainer]}>
+                    <TypingIndicator />
+                  </View>
+                </View>
+              ) : null}
+            />
+          )}
+        </View>
+
+        {/* Info note */}
+        <Text style={styles.infoNote}>
+          <Text style={{ fontSize: width * 0.027 }}>ⓘ </Text>
+          AI-generated content. Please verify information independently.
+        </Text>
+
+        {/* Chat input */}
+        <View style={styles.inputArea}>
+          <TextInput
+            style={styles.input}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Ask your question..."
+            placeholderTextColor="#C0C0C0"
           />
+          <TouchableOpacity style={styles.inputIconButton} onPress={handleSend}>
+            <Image style={styles.inputIcon} source={require('../../assets/send.png')} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.inputIconButton, { marginLeft: 8 }]}>
+            <Image style={styles.inputIcon} source={require('../../assets/camera.png')} />
+          </TouchableOpacity>
+        </View>
 
-          {/* Info note */}
-          <Text style={styles.infoNote}>
-            <Text style={{ fontSize: width * 0.027 }}>ⓘ </Text>
-            AI-generated content. Please verify information independently.
-          </Text>
-
-          {/* Input area */}
-          <View style={styles.inputWrapper}>
-            <View style={styles.inputArea}>
-              <TextInput
-                style={styles.input}
-                value={inputText}
-                onChangeText={setInputText}
-                placeholder="Ask your question..."
-                placeholderTextColor="#C0C0C0"
-              />
-              <TouchableOpacity style={styles.inputIconButton} onPress={handleSend}>
-                <Image style={styles.inputIcon} source={require('../../assets/send.png')} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.inputIconButton}>
-                <Image style={styles.inputIcon} source={require('../../assets/camera.png')} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.inputIconButton}>
-                <Image style={styles.inputIcon} source={require('../../assets/mic.png')} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Footer bar */}
-          <View style={styles.tabArea}>
-            <TouchableOpacity style={styles.tabAreaButton}>
-              <Image style={styles.tabAreaButtonImage} source={require('../../assets/chat.png')} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.tabAreaButton} onPress={() => navigation.navigate('VoiceInteraction')}>
-              <Image style={styles.tabAreaButtonImage} source={require('../../assets/profile.png')} />
-            </TouchableOpacity>
-          </View>
+        {/* Footer bar */}
+        <View style={styles.tabArea}>
+          <TouchableOpacity style={styles.tabAreaButton}>
+            <Image style={styles.tabAreaButtonImage} source={require('../../assets/chat.png')} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.tabAreaButton}
+            onPress={() => navigation.navigate('VoiceInteraction')}
+          >
+            <Image style={styles.tabAreaButtonImage} source={require('../../assets/profile.png')} />
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
-const createStyles = () => {
-  const mainGreen = '#3E8577';
-  const darkGreen = '#367165';
-  return StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: mainGreen,
-      borderRadius: width * 0.06,
-    },
-    header: {
-      height: height * 0.12,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: width * 0.05,
-      marginBottom: height * 0.01,
-      marginTop: height * 0.015,
-      backgroundColor: '#367165'
-    },
-    headerLogoContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    headerLogo: {
-      width: width * 0.10,
-      height: width * 0.10,
-      resizeMode: 'contain',
-      marginRight: width * 0.01,
-    },
-    headerLogoText: {
-      flexDirection: 'row',
-      fontWeight: 'bold',
-      fontSize: width * 0.06,
-      color: '#F7CB46',
-    },
-    headerLogoTextMain: {
-      color: '#F7CB46',
-      fontWeight: 'bold',
-      fontSize: width * 0.06,
-    },
-    headerLogoTextDot: {
-      color: '#ffffff',
-      fontWeight: 'bold',
-      fontSize: width * 0.055,
-    },
-    headerButton: {
-      padding: width * 0.02,
-      borderRadius: width * 0.03,
-    },
-    headerButtonImage: {
-      width: width * 0.075,
-      height: width * 0.075,
-      tintColor: '#fff',
-      resizeMode: 'contain',
-    },
-    suggestedQuestionsList: {
-      flexGrow: 0,
-    },
-    suggestedQuestionsContent: {
-      paddingTop: height * 0.02,
-      paddingHorizontal: width * 0.01,
-      alignItems: 'center',
-    },
-    suggestedQuestionButton: {
-      width: width * 0.87,
-      backgroundColor: darkGreen,
-      borderRadius: width * 0.06,
-      marginVertical: height * 0.012,
-      paddingVertical: height * 0.025,
-      justifyContent: 'center',
-      alignItems: 'center',
-      elevation: 7,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.13,
-      shadowRadius: 8,
-    },
-    suggestedQuestionText: {
-      color: '#fff',
-      fontSize: width * 0.044,
-      textAlign: 'center',
-      fontWeight: '500',
-      lineHeight: width * 0.06,
-    },
-    infoNote: {
-      fontSize: width * 0.022,
-      color: '#EEE',
-      opacity: 0.7,
-      textAlign: 'center',
-      marginTop: height * 0.12,
-      marginBottom: height * 0.01,
-    },
-    inputWrapper: {
-      width: '100%',
-      alignItems: 'center',
-      position: 'absolute',
-      bottom: height * 0.11,
-      left: 0,
-      zIndex: 10,
-    },
-    inputArea: {
-      width: width * 0.93,
-      backgroundColor: mainGreen,
-      borderRadius: width * 0.07,
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: width * 0.04,
-      paddingVertical: height * 0.015,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 7,
-      elevation: 5,
-      borderWidth: 1.3,
-      borderColor: '#264a40',
-    },
-    input: {
-      flex: 1,
-      fontSize: width * 0.043,
-      color: '#fff',
-      paddingVertical: 0,
-      marginRight: width * 0.02,
-    },
-    inputIconButton: {
-      marginHorizontal: width * 0.01,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    inputIcon: {
-      width: width * 0.06,
-      height: width * 0.06,
-      tintColor: '#fff',
-    },
-    tabArea: {
-      position: 'absolute',
-      bottom: 0,
-      width: '100%',
-      height: height * 0.09,
-      backgroundColor: '#367165',
-      borderBottomLeftRadius: width * 0.06,
-      borderBottomRightRadius: width * 0.06,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-evenly',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -4 },
-      shadowOpacity: 0.10,
-      shadowRadius: 8,
-      elevation: 12,
-    },
-    tabAreaButton: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    tabAreaButtonImage: {
-      width: width * 0.10,
-      height: width * 0.10,
-      tintColor: '#fff',
-      resizeMode: 'contain',
-    },
-  });
-};
+const mainGreen = '#3E8577';
+const darkGreen = '#367165';
+
+const styles = StyleSheet.create({
+  safeContainer: { flex: 1, backgroundColor: mainGreen },
+  container: { flex: 1, backgroundColor: mainGreen },
+  header: {
+    height: height * 0.1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: width * 0.05,
+    backgroundColor: darkGreen,
+  },
+  headerLogoContainer: { flexDirection: 'row', alignItems: 'center' },
+  headerLogo: {
+    width: width * 0.1,
+    height: width * 0.1,
+    resizeMode: 'contain',
+    marginRight: width * 0.01,
+  },
+  headerLogoText: {
+    fontWeight: 'bold',
+    fontSize: width * 0.06,
+    color: '#F7CB46',
+  },
+  headerLogoTextMain: { color: '#F7CB46', fontWeight: 'bold' },
+  headerLogoTextDot: { color: '#ffffff', fontWeight: 'bold' },
+  headerButtonImage: {
+    width: width * 0.075,
+    height: width * 0.075,
+    tintColor: '#fff',
+    resizeMode: 'contain',
+  },
+  contentArea: { flex: 1 },
+  suggestedQuestionsContent: {
+    paddingVertical: height * 0.02,
+    alignItems: 'center',
+  },
+  suggestedQuestionButton: {
+    width: width * 0.9,
+    backgroundColor: darkGreen,
+    borderRadius: width * 0.06,
+    marginVertical: height * 0.012,
+    paddingVertical: height * 0.025,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+  },
+  suggestedQuestionText: {
+    color: '#fff',
+    fontSize: width * 0.035,
+    textAlign: 'center',
+    fontWeight: '500',
+    paddingHorizontal: width * 0.05,
+  },
+  messagesContainer: { paddingHorizontal: 10, paddingVertical: 20 },
+  messageRow: {
+    marginVertical: 5,
+    maxWidth: '75%',
+  },
+  userRow: {
+    alignSelf: 'flex-end',
+  },
+  botRow: {
+    alignSelf: 'flex-start',
+  },
+  message: {
+    padding: 12,
+    borderRadius: 18,
+  },
+  userMessage: {
+    backgroundColor: '#367165',
+    borderBottomRightRadius: 5,
+  },
+  botMessage: {
+    backgroundColor: '#264a40',
+    borderBottomLeftRadius: 5,
+  },
+  messageText: { color: '#fff', fontSize: 16 },
+  loadingContainer: {
+    width: 80,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  typingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+  },
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fff',
+    marginHorizontal: 3,
+  },
+  iconActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 10,
+    paddingLeft: 12,
+  },
+  actionIcon: {
+    marginRight: 20,
+    opacity: 0.9,
+  },
+  infoNote: {
+    fontSize: width * 0.025,
+    color: '#EEE',
+    opacity: 0.8,
+    textAlign: 'center',
+    marginVertical: height * 0.01,
+  },
+  inputArea: {
+    width: width * 0.93,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: mainGreen,
+    borderRadius: width * 0.07,
+    paddingHorizontal: width * 0.04,
+    paddingVertical: height * 0.015,
+    marginBottom: height * 0.02,
+    borderWidth: 1.3,
+    borderColor: '#264a40',
+  },
+  input: {
+    flex: 1,
+    fontSize: width * 0.043,
+    color: '#fff',
+    marginRight: width * 0.02,
+  },
+  inputIconButton: { marginHorizontal: width * 0.01 },
+  inputIcon: {
+    width: width * 0.06,
+    height: width * 0.06,
+    tintColor: '#fff',
+  },
+  tabArea: {
+    height: height * 0.09,
+    backgroundColor: darkGreen,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+  },
+  tabAreaButton: { flex: 1, alignItems: 'center' },
+  tabAreaButtonImage: {
+    width: width * 0.1,
+    height: width * 0.1,
+    tintColor: '#fff',
+    resizeMode: 'contain',
+  },
+});
 
 export default Chatbot;

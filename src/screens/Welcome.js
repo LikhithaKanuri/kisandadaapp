@@ -11,44 +11,67 @@ import {
 import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import dimensions from '../constants/dimensions';
+import { getSession } from '../database/localdb';
 
 const Welcome = () => {
     const logoAnim = useRef(new Animated.Value(0)).current;
     const textAnim = useRef(new Animated.Value(0)).current;
     const buttonAnim = useRef(new Animated.Value(0)).current;
     const navigation = useNavigation();
+    const [loading, setLoading] = useState(true);
 
-    // Track when the logo is loaded
-    const [logoLoaded, setLogoLoaded] = useState(false);
-
-    // Start animation only after logo image has loaded
     useEffect(() => {
-        if (logoLoaded) {
-            Animated.sequence([
-                Animated.timing(logoAnim, {
-                    toValue: 1,
-                    duration: 500,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(textAnim, {
-                    toValue: 1,
-                    duration: 500,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(buttonAnim, {
-                    toValue: 1,
-                    duration: 500,
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        }
-    }, [logoLoaded]);
+        const checkSession = async () => {
+            try {
+                const token = await getSession();
+                if (token) {
+                    navigation.replace('Chatbot');
+                } else {
+                    setLoading(false);
+                    startAnimation();
+                }
+            } catch (error) {
+                console.error('Failed to get session:', error);
+                setLoading(false);
+                startAnimation();
+            }
+        };
+
+        checkSession();
+    }, []);
+
+    const startAnimation = () => {
+        Animated.sequence([
+            Animated.timing(logoAnim, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: true,
+            }),
+            Animated.timing(textAnim, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: true,
+            }),
+            Animated.timing(buttonAnim, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
 
     const redirect = () => navigation.navigate('Login');
 
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color="#F7CB46" />
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
-            {/* Logo with loader overlay */}
             <Animated.View
                 style={[
                     styles.logoContainer,
@@ -65,26 +88,12 @@ const Welcome = () => {
                     },
                 ]}
             >
-                <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
-                    <Image
-                        source={require('../../assets/applogo1.png')}
-                        style={[
-                            styles.logo,
-                            { opacity: logoLoaded ? 1 : 0 }
-                        ]}
-                        onLoadEnd={() => setLogoLoaded(true)}
-                    />
-                    {!logoLoaded && (
-                        <ActivityIndicator
-                            size="large"
-                            color="#F7CB46"
-                            style={styles.logoLoader}
-                        />
-                    )}
-                </View>
+                <Image
+                    source={require('../../assets/applogo1.png')}
+                    style={styles.logo}
+                />
             </Animated.View>
 
-            {/* Title and Subtitle */}
             <Animated.View
                 style={[
                     styles.textContainer,
@@ -102,15 +111,13 @@ const Welcome = () => {
                 ]}
             >
                 <Text style={styles.title}>
-                    <Text style={styles.titleOrange}>KisanDada</Text>
-                    <Text style={styles.titleDot}>.ai</Text>
+                    <Text style={styles.titleOrange}>Kisan Dada</Text>
                 </Text>
                 <Text style={styles.subtitle}>
                     Guiding Farmers with the Power of Intelligence.
                 </Text>
             </Animated.View>
 
-            {/* Get Started Button */}
             <Animated.View
                 style={[
                     styles.buttonContainer,
@@ -156,14 +163,6 @@ const styles = StyleSheet.create({
         height: dimensions.width * 0.48,
         resizeMode: 'contain',
     },
-    logoLoader: {
-        position: 'absolute',
-        left: '50%',
-        top: '50%',
-        marginLeft: -24,
-        marginTop: -24,
-        zIndex: 1,
-    },
     textContainer: {
         alignItems: 'center',
         marginBottom: 80,
@@ -177,11 +176,6 @@ const styles = StyleSheet.create({
         color: '#F7CB46',
         fontWeight: 'bold',
         fontSize: 32,
-    },
-    titleDot: {
-        color: '#222',
-        fontSize: 32,
-        fontWeight: 'bold',
     },
     subtitle: {
         fontSize: 16,

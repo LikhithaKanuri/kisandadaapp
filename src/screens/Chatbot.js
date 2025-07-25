@@ -16,6 +16,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { AntDesign } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
+import * as ImagePicker from 'expo-image-picker';
 
 const { width, height } = Dimensions.get('window');
 
@@ -57,9 +58,19 @@ const Chatbot = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(null);
+  const [image, setImage] = useState(null);
   const navigation = useNavigation();
   const flatListRef = useRef(null);
 
+  useEffect(() => {
+    (async () => {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Sorry, we need camera permissions to make this work!');
+      }
+    })();
+  }, []);
+  
   useEffect(() => {
     const getVoice = async () => {
       const voices = await Speech.getAvailableVoicesAsync();
@@ -86,12 +97,29 @@ const Chatbot = () => {
     setInputText(question);
   };
 
-  const handleSend = () => {
-    if (inputText.trim() === '' || isLoading) return;
+  const handleCamera = async () => {
+    let result = await ImagePicker.launchCameraAsync({
+      allowsEditing: false, // Set to false to prevent cropping
+      quality: 1,
+    });
 
-    const newMessage = { id: Date.now(), text: inputText.trim(), sender: 'user' };
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
+  const handleSend = () => {
+    if (inputText.trim() === '' && !image || isLoading) return;
+
+    const newMessage = { 
+      id: Date.now(), 
+      text: inputText.trim(), 
+      sender: 'user',
+      imageUri: image,
+    };
     setMessages((prev) => [...prev, newMessage]);
     setInputText('');
+    setImage(null);
     setIsLoading(true);
 
     setTimeout(() => {
@@ -143,7 +171,8 @@ const Chatbot = () => {
   const renderMessage = ({ item }) => (
     <View style={[styles.messageRow, item.sender === 'bot' ? styles.botRow : styles.userRow]}>
         <View style={[styles.message, item.sender === 'bot' ? styles.botMessage : styles.userMessage]}>
-          <Text style={styles.messageText}>{item.text}</Text>
+          {item.imageUri && <Image source={{ uri: item.imageUri }} style={styles.messageImage} />}
+          {item.text.length > 0 && <Text style={styles.messageText}>{item.text}</Text>}
         </View>
         {item.sender === 'bot' && (
             <View style={styles.iconActions}>
@@ -212,6 +241,15 @@ const Chatbot = () => {
             />
           )}
         </View>
+        
+        {image && (
+          <View style={styles.previewContainer}>
+            <Image source={{ uri: image }} style={styles.previewImage} />
+            <TouchableOpacity style={styles.removeImageButton} onPress={() => setImage(null)}>
+              <AntDesign name="closecircle" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Info note */}
         <Text style={styles.infoNote}>
@@ -231,7 +269,7 @@ const Chatbot = () => {
           <TouchableOpacity style={styles.inputIconButton} onPress={handleSend}>
             <Image style={styles.inputIcon} source={require('../../assets/send.png')} />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.inputIconButton, { marginLeft: 8 }]}>
+          <TouchableOpacity style={[styles.inputIconButton, { marginLeft: 8 }]} onPress={handleCamera}>
             <Image style={styles.inputIcon} source={require('../../assets/camera.png')} />
           </TouchableOpacity>
         </View>
@@ -333,6 +371,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 5,
   },
   messageText: { color: '#fff', fontSize: 16 },
+  messageImage: {
+    width: width * 0.6,
+    height: width * 0.45,
+    borderRadius: 15,
+    marginBottom: 5,
+  },
   loadingContainer: {
     width: 80,
     height: 50,
@@ -362,6 +406,20 @@ const styles = StyleSheet.create({
   actionIcon: {
     marginRight: 20,
     opacity: 0.9,
+  },
+  previewContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: darkGreen,
+  },
+  previewImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+  },
+  removeImageButton: {
+    marginLeft: 10,
   },
   infoNote: {
     fontSize: width * 0.025,

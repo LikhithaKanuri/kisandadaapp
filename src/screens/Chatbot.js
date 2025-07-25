@@ -64,11 +64,11 @@ const Chatbot = () => {
             <View style={styles.headerLogoContainer}>
               <Image style={styles.headerLogo} source={require('../../src/assets/applogo1.png')} />
               <Text style={styles.headerLogoText}>
-                <Text style={styles.headerLogoTextMain}>KrishiSaarathi</Text>
+                <Text style={styles.headerLogoTextMain}>KisanDada</Text>
                 <Text style={styles.headerLogoTextDot}>.ai</Text>
               </Text>
             </View>
-            <TouchableOpacity style={styles.headerButton}>
+            <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Options')}>
               <Image style={styles.headerButtonImage} source={require('../../src/assets/settings.png')} />
             </TouchableOpacity>
           </View>

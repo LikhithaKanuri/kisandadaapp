@@ -6,11 +6,6 @@ const LoginScreen = () => {
   const navigation = useNavigation();
   const { width, height } = Dimensions.get('window');
 
-  // Handlers
-  const handleGoogleSignIn = () => {
-    console.log('Google Sign-In pressed');
-    navigation.navigate("SelectLanguage");
-  };
   const handlePhoneSignIn = () => {
     navigation.navigate("SelectLanguage");
   };
@@ -19,20 +14,14 @@ const LoginScreen = () => {
     <View style={styles.root}>
       <View style={styles.container}>
         {/* Logo */}
-        <Image source={require('../../src/assets/applogo1.png')} style={styles.logo} />
+        <Image source={require('../../assets/applogo1.png')} style={styles.logo} />
 
         {/* Title */}
         <Text style={styles.title}>Login to Account</Text>
 
-        {/* Google Button */}
-        <TouchableOpacity style={styles.button} onPress={handleGoogleSignIn} activeOpacity={0.85}>
-          <Image source={require('../../src/assets/google.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Continue with Google</Text>
-        </TouchableOpacity>
-
         {/* Phone Button */}
         <TouchableOpacity style={styles.button} onPress={handlePhoneSignIn} activeOpacity={0.85}>
-          <Image source={require('../../src/assets/otp1.png')} style={styles.buttonIcon} />
+          <Image source={require('../../assets/otp1.png')} style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Login with Phone No.</Text>
         </TouchableOpacity>
       </View>
@@ -76,7 +65,7 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#367165', // Slightly darker than bg for buttons
+    backgroundColor: '#367167',
     width: buttonWidth,
     borderRadius: 32,
     paddingVertical: 18,
@@ -84,7 +73,7 @@ const styles = StyleSheet.create({
     marginBottom: 28,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 7 },
-    shadowOpacity: 0.26,
+    shadowOpacity: 0.4,
     shadowRadius: 14,
     elevation: 8,
   },

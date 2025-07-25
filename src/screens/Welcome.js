@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -6,6 +6,7 @@ import {
     Image,
     TouchableOpacity,
     Animated,
+    ActivityIndicator,
 } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -17,31 +18,37 @@ const Welcome = () => {
     const buttonAnim = useRef(new Animated.Value(0)).current;
     const navigation = useNavigation();
 
+    // Track when the logo is loaded
+    const [logoLoaded, setLogoLoaded] = useState(false);
+
+    // Start animation only after logo image has loaded
     useEffect(() => {
-        Animated.sequence([
-            Animated.timing(logoAnim, {
-                toValue: 1,
-                duration: 900,
-                useNativeDriver: true,
-            }),
-            Animated.timing(textAnim, {
-                toValue: 1,
-                duration: 900,
-                useNativeDriver: true,
-            }),
-            Animated.timing(buttonAnim, {
-                toValue: 1,
-                duration: 900,
-                useNativeDriver: true,
-            }),
-        ]).start();
-    }, []);
+        if (logoLoaded) {
+            Animated.sequence([
+                Animated.timing(logoAnim, {
+                    toValue: 1,
+                    duration: 500,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(textAnim, {
+                    toValue: 1,
+                    duration: 500,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(buttonAnim, {
+                    toValue: 1,
+                    duration: 500,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    }, [logoLoaded]);
 
     const redirect = () => navigation.navigate('Login');
 
     return (
         <View style={styles.container}>
-            {/* Logo */}
+            {/* Logo with loader overlay */}
             <Animated.View
                 style={[
                     styles.logoContainer,
@@ -58,10 +65,23 @@ const Welcome = () => {
                     },
                 ]}
             >
-                <Image
-                    source={require('../assets/applogo1.png')}
-                    style={styles.logo}
-                />
+                <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
+                    <Image
+                        source={require('../../assets/applogo1.png')}
+                        style={[
+                            styles.logo,
+                            { opacity: logoLoaded ? 1 : 0 }
+                        ]}
+                        onLoadEnd={() => setLogoLoaded(true)}
+                    />
+                    {!logoLoaded && (
+                        <ActivityIndicator
+                            size="large"
+                            color="#F7CB46"
+                            style={styles.logoLoader}
+                        />
+                    )}
+                </View>
             </Animated.View>
 
             {/* Title and Subtitle */}
@@ -82,7 +102,7 @@ const Welcome = () => {
                 ]}
             >
                 <Text style={styles.title}>
-                    <Text style={styles.titleOrange}>KrishiSaarathi</Text>
+                    <Text style={styles.titleOrange}>KisanDada</Text>
                     <Text style={styles.titleDot}>.ai</Text>
                 </Text>
                 <Text style={styles.subtitle}>
@@ -136,6 +156,14 @@ const styles = StyleSheet.create({
         height: dimensions.width * 0.48,
         resizeMode: 'contain',
     },
+    logoLoader: {
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        marginLeft: -24,
+        marginTop: -24,
+        zIndex: 1,
+    },
     textContainer: {
         alignItems: 'center',
         marginBottom: 80,
@@ -146,7 +174,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     titleOrange: {
-        color: '#F7CB46', // gold/yellow for brand
+        color: '#F7CB46',
         fontWeight: 'bold',
         fontSize: 32,
     },
@@ -171,7 +199,7 @@ const styles = StyleSheet.create({
     button: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#3E8577', // light green
+        backgroundColor: '#3E8577',
         paddingVertical: 16,
         paddingHorizontal: 32,
         borderRadius: 30,

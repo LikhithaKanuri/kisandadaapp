@@ -50,7 +50,7 @@ const SelectLanguage = () => {
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
             {/* IMAGE WITH WELCOME TEXT INSIDE */}
             <ImageBackground
-                source={require('../assets/welcome.jpeg')}
+                source={require('../../assets/welcome.jpeg')}
                 style={styles.backgroundImage}
             >
                 <View style={styles.textOnImage}>

@@ -47,6 +47,11 @@ const VoiceInteractionScreen = () => {
     navigation.navigate('Chatbot');
   };
 
+  const handleOptionsRoute = () => {
+    console.log("OptionsOptions")
+    navigation.navigate('Options');
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -54,7 +59,7 @@ const VoiceInteractionScreen = () => {
         <View style={styles.callingInterface}>
           <Text style={styles.callingText}>{message === 'Calling Dadaji...' ? message : formatTime()}</Text>
           <Image
-            source={require('../assets/profile.png')} // Replace with actual contact image
+            source={require('../../assets/profile.png')} // Replace with actual contact image
             style={styles.contactImage}
           />
           <Text style={styles.contactName}>Dadaji</Text>
@@ -63,15 +68,15 @@ const VoiceInteractionScreen = () => {
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.button}>
-            <Image source={require('../assets/mic.png')} style={styles.buttonIcon} />
+            <Image source={require('../../assets/mic.png')} style={styles.buttonIcon} />
             <Text style={styles.buttonText}>Mute</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
-            <Image source={require('../assets/chat.png')} style={styles.buttonIcon} />
+          <TouchableOpacity style={styles.button} onPress={handleEndCall}>
+            <Image source={require('../../assets/chat.png')} style={styles.buttonIcon} />
             <Text style={styles.buttonText}>Chat</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
-            <Image source={require('../assets/settings.png')} style={styles.buttonIcon} />
+          <TouchableOpacity style={styles.button}  onPress={handleOptionsRoute}>
+            <Image source={require('../../assets/settings.png')} style={styles.buttonIcon} />
             <Text style={styles.buttonText}>Settings</Text>
           </TouchableOpacity>
         </View>

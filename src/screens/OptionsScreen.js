@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,10 @@ import {
   Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { deleteSession } from '../database/localdb';
+import { deleteSession, saveLanguage, getLanguage } from '../database/localdb';
 import { AntDesign } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-
+import i18n from '../locales/i18n';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -24,8 +24,20 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 const OptionsScreen = () => {
   const { t } = useTranslation();
   const [isWarehouseOpen, setIsWarehouseOpen] = useState(false);
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
   const navigation = useNavigation();
+
+  useEffect(() => {
+    const fetchLanguage = async () => {
+      const lang = await getLanguage();
+      if (lang) {
+        setSelectedLanguage(lang);
+      }
+    };
+    fetchLanguage();
+  }, []);
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -41,9 +53,22 @@ const OptionsScreen = () => {
     }
   };
 
+  const handleLanguageChange = async (lang) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setSelectedLanguage(lang);
+    await saveLanguage(lang);
+    i18n.changeLanguage(lang);
+    setIsLanguageOpen(false);
+  };
+
   const toggleWarehouse = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsWarehouseOpen(!isWarehouseOpen);
+  };
+
+  const toggleLanguage = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsLanguageOpen(!isLanguageOpen);
   };
 
   return (
@@ -64,6 +89,28 @@ const OptionsScreen = () => {
 
       <View style={styles.container}>
         <Text style={styles.title}>{t('Settings')}</Text>
+
+        <TouchableOpacity style={styles.optionButton} onPress={toggleLanguage}>
+          <Text style={styles.optionText}>{t('Language')}</Text>
+          <AntDesign name={isLanguageOpen ? 'down' : 'right'} size={20} color="#fff" />
+        </TouchableOpacity>
+
+        {isLanguageOpen && (
+          <View style={styles.subMenu}>
+            <TouchableOpacity 
+              style={[styles.subOptionButton, selectedLanguage === 'en' && styles.selectedSubOption]} 
+              onPress={() => handleLanguageChange('en')}
+            >
+              <Text style={styles.subOptionText}>English</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.subOptionButton, selectedLanguage === 'hi' && styles.selectedSubOption]} 
+              onPress={() => handleLanguageChange('hi')}
+            >
+              <Text style={styles.subOptionText}>Hindi</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <TouchableOpacity style={styles.optionButton} onPress={toggleWarehouse}>
           <Text style={styles.optionText}>{t('Warehouses')}</Text>
@@ -147,6 +194,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 10,
   },
+  selectedSubOption: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#fff',
+    borderWidth: 1,
+  },
   subOptionText: {
     fontSize: 16,
     color: '#fff',
@@ -156,7 +208,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   logoutText: {
-    textAlign: 'center',
     fontWeight: 'bold',
   },
   modalBackground: {

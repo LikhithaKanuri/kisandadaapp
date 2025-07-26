@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { AntDesign } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -49,13 +50,8 @@ const VoiceInteractionScreen = () => {
     navigation.navigate('Chatbot');
   };
 
-  const handleOptionsRoute = () => {
-    console.log("OptionsOptions")
-    navigation.navigate('Options');
-  };
-
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeContainer}>
       <View style={styles.container}>
         {/* Calling Interface */}
         <View style={styles.callingInterface}>
@@ -77,10 +73,6 @@ const VoiceInteractionScreen = () => {
             <Image source={require('../../assets/chat.png')} style={styles.buttonIcon} />
             <Text style={styles.buttonText}>{t('Chat')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}  onPress={handleOptionsRoute}>
-            <Image source={require('../../assets/settings.png')} style={styles.buttonIcon} />
-            <Text style={styles.buttonText}>{t('Settings')}</Text>
-          </TouchableOpacity>
         </View>
 
         {/* End Call Button */}
@@ -92,16 +84,45 @@ const VoiceInteractionScreen = () => {
   );
 };
 
+const mainGreen = '#3E8577';
+const darkGreen = '#367165';
+
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  safeContainer: { flex: 1, backgroundColor: mainGreen },
   container: {
     flex: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: mainGreen,
+  },
+  header: {
+    height: height * 0.1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: width * 0.05,
+    backgroundColor: darkGreen,
+  },
+  headerLogoContainer: { flexDirection: 'row', alignItems: 'center' },
+  headerLogo: {
+    width: width * 0.1,
+    height: width * 0.1,
+    resizeMode: 'contain',
+    marginRight: width * 0.01,
+  },
+  headerLogoText: {
+    fontWeight: 'bold',
+    fontSize: width * 0.06,
+    color: '#F7CB46',
+  },
+  headerLogoTextMain: { color: '#F7CB46', fontWeight: 'bold' },
+  headerLogoTextDot: { color: '#ffffff', fontWeight: 'bold' },
+  headerButtonImage: {
+    width: width * 0.075,
+    height: width * 0.075,
+    tintColor: '#fff',
+    resizeMode: 'contain',
   },
   callingInterface: {
     alignItems: 'center',
@@ -109,7 +130,7 @@ const styles = StyleSheet.create({
   },
   callingText: {
     fontSize: width * 0.05,
-    color: '#888',
+    color: '#fff',
     marginBottom: 20,
   },
   contactImage: {
@@ -121,11 +142,12 @@ const styles = StyleSheet.create({
   contactName: {
     fontSize: width * 0.06,
     fontWeight: 'bold',
+    color: '#fff',
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    width: '100%',
+    width: '80%',
   },
   button: {
     alignItems: 'center',
@@ -134,10 +156,11 @@ const styles = StyleSheet.create({
     width: width * 0.1,
     height: width * 0.1,
     marginBottom: 5,
+    tintColor: '#fff',
   },
   buttonText: {
     fontSize: width * 0.04,
-    color: '#555',
+    color: '#fff',
   },
   endCallButton: {
     backgroundColor: 'red',

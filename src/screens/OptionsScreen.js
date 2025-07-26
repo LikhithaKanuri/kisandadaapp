@@ -10,6 +10,8 @@ import {
   UIManager,
   ActivityIndicator,
   Modal,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { deleteSession, saveLanguage, getLanguage } from '../database/localdb';
@@ -20,6 +22,8 @@ import i18n from '../locales/i18n';
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const { width, height } = Dimensions.get('window');
 
 const OptionsScreen = () => {
   const { t } = useTranslation();
@@ -87,6 +91,20 @@ const OptionsScreen = () => {
         </View>
       </Modal>
 
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <AntDesign name="arrowleft" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.headerLogoContainer}>
+          <Image style={styles.headerLogo} source={require('../../assets/applogo1.png')} />
+          <Text style={styles.headerLogoText}>
+            <Text style={styles.headerLogoTextMain}>KisanDada</Text>
+            <Text style={styles.headerLogoTextDot}>.ai</Text>
+          </Text>
+        </View>
+        <View style={{ width: 24 }} />
+      </View>
+
       <View style={styles.container}>
         <Text style={styles.title}>{t('Settings')}</Text>
 
@@ -148,15 +166,40 @@ const OptionsScreen = () => {
   );
 };
 
+const mainGreen = '#3E8577';
+const darkGreen = '#367165';
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#3E8577',
+    backgroundColor: mainGreen,
   },
+  header: {
+    height: height * 0.1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: width * 0.05,
+    backgroundColor: darkGreen,
+  },
+  headerLogoContainer: { flexDirection: 'row', alignItems: 'center' },
+  headerLogo: {
+    width: width * 0.1,
+    height: width * 0.1,
+    resizeMode: 'contain',
+    marginRight: width * 0.01,
+  },
+  headerLogoText: {
+    fontWeight: 'bold',
+    fontSize: width * 0.06,
+    color: '#F7CB46',
+  },
+  headerLogoTextMain: { color: '#F7CB46', fontWeight: 'bold' },
+  headerLogoTextDot: { color: '#ffffff', fontWeight: 'bold' },
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#3E8577',
+    backgroundColor: mainGreen,
   },
   title: {
     fontSize: 28,

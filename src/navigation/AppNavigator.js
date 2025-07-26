@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Welcome from '../screens/Welcome';
 import SelectLanguage from '../screens/SelectLanguage';
 import LoginScreen from '../screens/LoginScreen';
-import Chatbot from '../screens/Chatbot'; // Import Chatbot
+import Chatbot from '../screens/Chatbot';
 import VoiceInteractionScreen from '../screens/VoiceInteractionScreen';
 import OptionsScreen from '../screens/OptionsScreen';
 

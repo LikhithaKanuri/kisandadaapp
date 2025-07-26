@@ -201,13 +201,13 @@ const Chatbot = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity>
-            <Image style={styles.headerButtonImage} source={require('../../assets/list.png')} />
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <AntDesign name="arrowleft" size={24} color="#fff" />
           </TouchableOpacity>
           <View style={styles.headerLogoContainer}>
             <Image style={styles.headerLogo} source={require('../../assets/applogo1.png')} />
             <Text style={styles.headerLogoText}>
-              <Text style={styles.headerLogoTextMain}>KisanDada</Text>
+              <Text style={styles.headerLogoTextMain}>{t('Kisan Dada')}</Text>
               <Text style={styles.headerLogoTextDot}>.ai</Text>
             </Text>
           </View>

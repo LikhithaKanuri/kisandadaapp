@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -13,9 +13,10 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import i18n from '../locales/i18n';
+import { saveLanguage, getLanguage } from '../database/localdb';
 
 const { width, height } = Dimensions.get('window');
-const IMAGE_HEIGHT = height * 0.55; 
+const IMAGE_HEIGHT = height * 0.55;
 const languages = [
     { code: 'en', name: 'English' },
     { code: 'hi', name: 'Hindi' },
@@ -27,9 +28,22 @@ const SelectLanguage = () => {
     const { t } = useTranslation();
     const [selectedLanguage, setSelectedLanguage] = useState('en');
 
-    const handleLanguageSelect = (language) => {
+    useEffect(() => {
+        const fetchLanguage = async () => {
+            const savedLanguage = await getLanguage();
+            console.log("savedLanguage-> ", savedLanguage);
+            if (savedLanguage) {
+                setSelectedLanguage(savedLanguage);
+                i18n.changeLanguage(savedLanguage);
+            }
+        };
+        fetchLanguage();
+    }, []);
+
+    const handleLanguageSelect = async (language) => {
         setSelectedLanguage(language.code);
         i18n.changeLanguage(language.code);
+        await saveLanguage(language.code);
         navigation.navigate("Chatbot");
     };
 

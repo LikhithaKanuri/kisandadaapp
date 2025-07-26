@@ -108,6 +108,14 @@ const OptionsScreen = () => {
       <View style={styles.container}>
         <Text style={styles.title}>{t('Settings')}</Text>
 
+        <TouchableOpacity style={styles.optionButton}>
+          <Text style={styles.optionText}>{t('Crop Analysis')}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.optionButton, styles.logoutButton]} onPress={handleLogout} disabled={isLoading}>
+          <Text style={[styles.optionText, styles.logoutText]}>{t('Logout')}</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.optionButton} onPress={toggleLanguage}>
           <Text style={styles.optionText}>{t('Language')}</Text>
           <AntDesign name={isLanguageOpen ? 'down' : 'right'} size={20} color="#fff" />
@@ -129,38 +137,6 @@ const OptionsScreen = () => {
             </TouchableOpacity>
           </View>
         )}
-
-        <TouchableOpacity style={styles.optionButton} onPress={toggleWarehouse}>
-          <Text style={styles.optionText}>{t('Warehouses')}</Text>
-          <AntDesign name={isWarehouseOpen ? 'down' : 'right'} size={20} color="#fff" />
-        </TouchableOpacity>
-
-        {isWarehouseOpen && (
-          <View style={styles.subMenu}>
-            <TouchableOpacity style={styles.subOptionButton}>
-              <Text style={styles.subOptionText}>{t('Nearby Warehouses')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.subOptionButton}>
-              <Text style={styles.subOptionText}>{t('Analyzed Warehouses')}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        <TouchableOpacity style={styles.optionButton}>
-          <Text style={styles.optionText}>{t('Nearby Gov. Fertilize shop')}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.optionButton}>
-          <Text style={styles.optionText}>{t('Sale Mandi by predicting')}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.optionButton}>
-          <Text style={styles.optionText}>{t('Crop Analysis')}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.optionButton, styles.logoutButton]} onPress={handleLogout} disabled={isLoading}>
-          <Text style={[styles.optionText, styles.logoutText]}>{t('Logout')}</Text>
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

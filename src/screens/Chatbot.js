@@ -18,6 +18,8 @@ import { AntDesign } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
+import { getLanguage } from '../database/localdb';
+import axios from 'axios';
 
 const { width, height } = Dimensions.get('window');
 
@@ -46,11 +48,33 @@ const TypingIndicator = () => {
       {dotAnims.map((anim, i) => (
         <Animated.View
           key={i}
-          style={[styles.typingDot, { transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [0, -5] }) }] }]}
+          style={[
+            styles.typingDot,
+            { transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [0, -5] }) }] }
+          ]}
         />
       ))}
     </View>
   );
+};
+
+const AnimatedMessage = ({ text, onComplete }) => {
+  const [displayedText, setDisplayedText] = useState('');
+  const index = useRef(0);
+
+  useEffect(() => {
+    if (index.current < text.length) {
+      const timer = setTimeout(() => {
+        setDisplayedText((prev) => prev + text.charAt(index.current));
+        index.current += 1;
+      }, 50);
+      return () => clearTimeout(timer);
+    } else {
+      onComplete && onComplete();
+    }
+  }, [displayedText, text, onComplete]);
+
+  return <Text style={styles.messageText}>{displayedText}</Text>;
 };
 
 const Chatbot = () => {
@@ -72,11 +96,13 @@ const Chatbot = () => {
       }
     })();
   }, []);
-  
+
   useEffect(() => {
     const getVoice = async () => {
       const voices = await Speech.getAvailableVoicesAsync();
-      const voice = voices.find(v => v.language === 'en-GB' && v.name.includes('male')) || voices.find(v => v.language === 'en-US' && v.name.includes('male')) || null;
+      const voice = voices.find(v => v.language === 'en-GB' && v.name.includes('male')) ||
+                    voices.find(v => v.language === 'en-US' && v.name.includes('male')) ||
+                    null;
       setSelectedVoice(voice?.identifier);
     };
     getVoice();
@@ -84,14 +110,9 @@ const Chatbot = () => {
 
   const handleFeedback = (messageId, feedbackType) => {
     setMessages(prevMessages =>
-      prevMessages.map(msg => {
-        if (msg.id === messageId) {
-          const newFeedback = msg.feedback === feedbackType ? null : feedbackType;
-          console.log(`Feedback for message ${messageId}: ${newFeedback}`);
-          return { ...msg, feedback: newFeedback };
-        }
-        return msg;
-      })
+      prevMessages.map(msg =>
+        msg.id === messageId ? { ...msg, feedback: msg.feedback === feedbackType ? null : feedbackType } : msg
+      )
     );
   };
 
@@ -100,62 +121,70 @@ const Chatbot = () => {
   };
 
   const handleCamera = async () => {
-    let result = await ImagePicker.launchCameraAsync({
-      allowsEditing: false, 
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
+    let result = await ImagePicker.launchCameraAsync({ allowsEditing: false, quality: 1 });
+    if (!result.canceled) setImage(result.assets[0].uri);
   };
 
-  const handleSend = () => {
-    if (inputText.trim() === '' && !image || isLoading) return;
+  const handleSend = async () => {
+    if ((inputText.trim() === '' && !image) || isLoading) return;
 
-    const newMessage = { 
-      id: Date.now(), 
-      text: inputText.trim(), 
+    const newMessage = {
+      id: Date.now(),
+      text: inputText.trim(),
       sender: 'user',
       imageUri: image,
     };
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages(prev => [...prev, newMessage]);
     setInputText('');
     setImage(null);
     setIsLoading(true);
 
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
-    setTimeout(() => {
+    const lang = await getLanguage();
+    const url = `https://kissan-dada.kenpath.ai/chat/?query=${encodeURIComponent(newMessage.text)}&target_lang=${lang || 'en'}`;
+
+    try {
+      const response = await axios.get(url, { responseType: 'text' });
+      let botResponse = response.data;
+      if (botResponse.startsWith('"') && botResponse.endsWith('"')) {
+        botResponse = botResponse.slice(1, -1);
+      }
+
       const botMessage = {
         id: Date.now() + 1,
-        text: `${t('This is a simulated response to:')} "${newMessage.text}"`,
+        text: botResponse,
         sender: 'bot',
-        feedback: null, 
+        feedback: null,
+        animated: true,
       };
-      setMessages((prev) => [...prev, botMessage]);
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Axios error:', error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: 'Error: Could not connect to the server.',
+        sender: 'bot',
+        feedback: null,
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }, 2500);
+    }
   };
 
   const handleSpeak = async (text) => {
     if (isSpeaking) {
       await Speech.stop();
     }
-    const options = {
-        voice: selectedVoice,
-        pitch: 0.9,
-        rate: 0.8,
-        onStart: () => setIsSpeaking(true),
-        onDone: () => setIsSpeaking(false),
-        onError: () => setIsSpeaking(false),
-    };
-    Speech.speak(text, options);
+    Speech.speak(text, {
+      voice: selectedVoice,
+      pitch: 0.9,
+      rate: 0.8,
+      onStart: () => setIsSpeaking(true),
+      onDone: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+    });
   };
 
   const suggestedQuestions = [
@@ -172,23 +201,35 @@ const Chatbot = () => {
 
   const renderMessage = ({ item }) => (
     <View style={[styles.messageRow, item.sender === 'bot' ? styles.botRow : styles.userRow]}>
-        <View style={[styles.message, item.sender === 'bot' ? styles.botMessage : styles.userMessage]}>
-          {item.imageUri && <Image source={{ uri: item.imageUri }} style={styles.messageImage} />}
-          {item.text.length > 0 && <Text style={styles.messageText}>{item.text}</Text>}
-        </View>
-        {item.sender === 'bot' && (
-            <View style={styles.iconActions}>
-                <TouchableOpacity onPress={() => handleSpeak(item.text)}>
-                    <AntDesign name="sound" size={22} color={isSpeaking ? '#F7CB46' : '#E0E0E0'} style={styles.actionIcon} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleFeedback(item.id, 'liked')}>
-                    <AntDesign name="like1" size={20} color={item.feedback === 'liked' ? '#F7CB46' : '#E0E0E0'} style={styles.actionIcon} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleFeedback(item.id, 'disliked')}>
-                    <AntDesign name="dislike1" size={20} color={item.feedback === 'disliked' ? '#F7CB46' : '#E0E0E0'} style={styles.actionIcon} />
-                </TouchableOpacity>
-            </View>
+      <View style={[styles.message, item.sender === 'bot' ? styles.botMessage : styles.userMessage]}>
+        {item.imageUri && <Image source={{ uri: item.imageUri }} style={styles.messageImage} />}
+        {item.text.length > 0 && (
+          item.animated ? (
+            <AnimatedMessage
+              text={item.text}
+              onComplete={() => {
+                const newMessages = messages.map(m => m.id === item.id ? { ...m, animated: false, sender:'bot' } : m);
+                setMessages(newMessages);
+              }}
+            />
+          ) : (
+            <Text style={styles.messageText}>{item.text}</Text>
+          )
         )}
+      </View>
+      {item.sender === 'bot' && (
+        <View style={styles.iconActions}>
+          <TouchableOpacity onPress={() => handleSpeak(item.text)}>
+            <AntDesign name="sound" size={22} color={isSpeaking ? '#F7CB46' : '#E0E0E0'} style={styles.actionIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleFeedback(item.id, 'liked')}>
+            <AntDesign name="like1" size={20} color={item.feedback === 'liked' ? '#F7CB46' : '#E0E0E0'} style={styles.actionIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleFeedback(item.id, 'disliked')}>
+            <AntDesign name="dislike1" size={20} color={item.feedback === 'disliked' ? '#F7CB46' : '#E0E0E0'} style={styles.actionIcon} />
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 
@@ -216,7 +257,7 @@ const Chatbot = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Content Area */}
+        {/* Content */}
         <View style={styles.contentArea}>
           {messages.length === 0 ? (
             <FlatList
@@ -243,7 +284,7 @@ const Chatbot = () => {
             />
           )}
         </View>
-        
+
         {image && (
           <View style={styles.previewContainer}>
             <Image source={{ uri: image }} style={styles.previewImage} />
@@ -253,13 +294,12 @@ const Chatbot = () => {
           </View>
         )}
 
-        {/* Info note */}
         <Text style={styles.infoNote}>
           <Text style={{ fontSize: width * 0.027 }}>ⓘ </Text>
           {t('AI-generated content. Please verify information independently.')}
         </Text>
 
-        {/* Chat input */}
+        {/* Input */}
         <View style={styles.inputArea}>
           <TextInput
             style={styles.input}
@@ -276,15 +316,12 @@ const Chatbot = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Footer bar */}
+        {/* Footer */}
         <View style={styles.tabArea}>
           <TouchableOpacity style={styles.tabAreaButton}>
             <Image style={styles.tabAreaButtonImage} source={require('../../assets/chat.png')} />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.tabAreaButton}
-            onPress={() => navigation.navigate('VoiceInteraction')}
-          >
+          <TouchableOpacity style={styles.tabAreaButton} onPress={() => navigation.navigate('VoiceInteraction')}>
             <Image style={styles.tabAreaButtonImage} source={require('../../assets/profile.png')} />
           </TouchableOpacity>
         </View>
@@ -292,6 +329,7 @@ const Chatbot = () => {
     </SafeAreaView>
   );
 };
+
 
 const mainGreen = '#3E8577';
 const darkGreen = '#367165';

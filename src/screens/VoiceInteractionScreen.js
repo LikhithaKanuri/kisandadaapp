@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { AntDesign } from '@expo/vector-icons';
+import { Audio } from 'expo-av';
 
 const { width, height } = Dimensions.get('window');
 
@@ -18,25 +19,44 @@ const VoiceInteractionScreen = () => {
   const { t } = useTranslation();
   const [message, setMessage] = useState(t('Calling Dadaji...'));
   const [timer, setTimer] = useState(0);
+  const soundRef = useRef(new Audio.Sound());
+  const timerIdRef = useRef(null);
   const navigation = useNavigation();
 
   useEffect(() => {
-    const callingTimer = setTimeout(() => {
-      setMessage('00:00');
-      setTimer(0);
-    }, 2000);
+    const setupAndPlaySound = async () => {
+      try {
+        await soundRef.current.loadAsync(require('../../assets/call-ring.mp3'));
+        await soundRef.current.playAsync();
+        
+        timerIdRef.current = setTimeout(() => {
+          soundRef.current.stopAsync();
+          setMessage('00:00');
+          setTimer(0);
+        }, 4000);
 
-    return () => clearTimeout(callingTimer);
+      } catch (error) {
+        console.error("Failed to play sound", error);
+      }
+    };
+
+    setupAndPlaySound();
+
+    return () => {
+      soundRef.current.unloadAsync();
+      if (timerIdRef.current) {
+        clearTimeout(timerIdRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
     let interval = null;
     if (message === '00:00') {
       interval = setInterval(() => {
-        setTimer(timer => timer + 1);
+        setTimer(prevTimer => prevTimer + 1);
       }, 1000);
     }
-
     return () => clearInterval(interval);
   }, [message]);
 
@@ -47,23 +67,22 @@ const VoiceInteractionScreen = () => {
   };
 
   const handleEndCall = () => {
+    soundRef.current.stopAsync();
     navigation.navigate('Chatbot');
   };
 
   return (
     <SafeAreaView style={styles.safeContainer}>
       <View style={styles.container}>
-        {/* Calling Interface */}
         <View style={styles.callingInterface}>
           <Text style={styles.callingText}>{message === t('Calling Dadaji...') ? message : formatTime()}</Text>
           <Image
-            source={require('../../assets/profile.png')} // Replace with actual contact image
+            source={require('../../assets/profile.png')}
             style={styles.contactImage}
           />
           <Text style={styles.contactName}>{t('Dadaji')}</Text>
         </View>
 
-        {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.button}>
             <Image source={require('../../assets/mic.png')} style={styles.buttonIcon} />
@@ -75,7 +94,6 @@ const VoiceInteractionScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* End Call Button */}
         <TouchableOpacity style={styles.endCallButton} onPress={handleEndCall}>
           <Text style={styles.endCallButtonText}>{t('End Call')}</Text>
         </TouchableOpacity>
@@ -95,34 +113,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     backgroundColor: mainGreen,
-  },
-  header: {
-    height: height * 0.1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: width * 0.05,
-    backgroundColor: darkGreen,
-  },
-  headerLogoContainer: { flexDirection: 'row', alignItems: 'center' },
-  headerLogo: {
-    width: width * 0.1,
-    height: width * 0.1,
-    resizeMode: 'contain',
-    marginRight: width * 0.01,
-  },
-  headerLogoText: {
-    fontWeight: 'bold',
-    fontSize: width * 0.06,
-    color: '#F7CB46',
-  },
-  headerLogoTextMain: { color: '#F7CB46', fontWeight: 'bold' },
-  headerLogoTextDot: { color: '#ffffff', fontWeight: 'bold' },
-  headerButtonImage: {
-    width: width * 0.075,
-    height: width * 0.075,
-    tintColor: '#fff',
-    resizeMode: 'contain',
   },
   callingInterface: {
     alignItems: 'center',

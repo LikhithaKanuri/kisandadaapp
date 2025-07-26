@@ -20,8 +20,10 @@ import { auth } from '../database/firebase';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { signInWithPhoneNumber } from 'firebase/auth';
 import { saveSession } from '../database/localdb';
+import { useTranslation } from 'react-i18next';
 
 const LoginScreen = () => {
+  const { t } = useTranslation();
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [confirmResult, setConfirmResult] = useState(null);
@@ -43,7 +45,7 @@ const LoginScreen = () => {
         console.log('Verification ID:', confirmation.verificationId);
         setConfirmResult(confirmation);
       }else{
-        Alert.alert('Please enter a valid phone number');
+        Alert.alert(t('Please enter a valid phone number'));
       }
     } catch (err) {
       console.log('OTP send error: ', err);
@@ -58,7 +60,7 @@ const LoginScreen = () => {
       setUser(auth.currentUser);
       navigation.navigate('SelectLanguage');
       }else{
-        Alert.alert('Please enter a valid OTP');
+        Alert.alert(t('Please enter a valid OTP'));
       }
     } catch (err) {
       console.log('OTP verify error: ', err);
@@ -83,15 +85,15 @@ const LoginScreen = () => {
 
             <View style={styles.container}>
               <Image source={require('../../assets/applogo1.png')} style={styles.logo} />
-              <Text style={styles.title}>Login to Account</Text>
+              <Text style={styles.title}>{t('Login to Account')}</Text>
 
               {user ? (
-                <Text style={styles.successText}>Welcome {user.phoneNumber}</Text>
+                <Text style={styles.successText}>{t('Welcome')} {user.phoneNumber}</Text>
               ) : confirmResult ? (
                 <>
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter OTP"
+                    placeholder={t('Enter OTP')}
                     placeholderTextColor="#fff"
                     value={otp}
                     onChangeText={setOtp}
@@ -99,14 +101,14 @@ const LoginScreen = () => {
                   />
                   
                   <TouchableOpacity style={styles.button} onPress={verifyOtp} activeOpacity={0.85}>
-                    <Text style={styles.buttonText}>Verify OTP</Text>
+                    <Text style={styles.buttonText}>{t('Verify OTP')}</Text>
                   </TouchableOpacity>
                 </>
               ) : (
                 <>
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter Phone No."
+                    placeholder={t('Enter Phone No.')}
                     placeholderTextColor="#fff"
                     value={phone}
                     onChangeText={setPhone}
@@ -114,7 +116,7 @@ const LoginScreen = () => {
                   />
                   <TouchableOpacity style={styles.button} onPress={sendOtp} activeOpacity={0.85}>
                     <Image source={require('../../assets/otp1.png')} style={styles.buttonIcon} />
-                    <Text style={styles.buttonText}>Continue with Phone no.</Text>
+                    <Text style={styles.buttonText}>{t('Continue with Phone no.')}</Text>
                   </TouchableOpacity>
                 </>
               )}

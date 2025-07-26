@@ -14,6 +14,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { deleteSession } from '../database/localdb';
 import { AntDesign } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -21,6 +22,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 const OptionsScreen = () => {
+  const { t } = useTranslation();
   const [isWarehouseOpen, setIsWarehouseOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation();
@@ -55,44 +57,44 @@ const OptionsScreen = () => {
         <View style={styles.modalBackground}>
           <View style={styles.activityIndicatorWrapper}>
             <ActivityIndicator size="large" color="#fff" />
-            <Text style={styles.loadingText}>Logging out...</Text>
+            <Text style={styles.loadingText}>{t('Logging out...')}</Text>
           </View>
         </View>
       </Modal>
 
       <View style={styles.container}>
-        <Text style={styles.title}>Settings</Text>
+        <Text style={styles.title}>{t('Settings')}</Text>
 
         <TouchableOpacity style={styles.optionButton} onPress={toggleWarehouse}>
-          <Text style={styles.optionText}>Warehouses</Text>
+          <Text style={styles.optionText}>{t('Warehouses')}</Text>
           <AntDesign name={isWarehouseOpen ? 'down' : 'right'} size={20} color="#fff" />
         </TouchableOpacity>
 
         {isWarehouseOpen && (
           <View style={styles.subMenu}>
             <TouchableOpacity style={styles.subOptionButton}>
-              <Text style={styles.subOptionText}>Nearby Warehouses</Text>
+              <Text style={styles.subOptionText}>{t('Nearby Warehouses')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.subOptionButton}>
-              <Text style={styles.subOptionText}>Analyzed Warehouses</Text>
+              <Text style={styles.subOptionText}>{t('Analyzed Warehouses')}</Text>
             </TouchableOpacity>
           </View>
         )}
 
         <TouchableOpacity style={styles.optionButton}>
-          <Text style={styles.optionText}>Nearby Gov. Fertilize shop</Text>
+          <Text style={styles.optionText}>{t('Nearby Gov. Fertilize shop')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.optionButton}>
-          <Text style={styles.optionText}>Sale Mandi by predicting</Text>
+          <Text style={styles.optionText}>{t('Sale Mandi by predicting')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.optionButton}>
-          <Text style={styles.optionText}>Crop Analysis</Text>
+          <Text style={styles.optionText}>{t('Crop Analysis')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.optionButton, styles.logoutButton]} onPress={handleLogout} disabled={isLoading}>
-          <Text style={[styles.optionText, styles.logoutText]}>Logout</Text>
+          <Text style={[styles.optionText, styles.logoutText]}>{t('Logout')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

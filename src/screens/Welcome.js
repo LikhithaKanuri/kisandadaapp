@@ -12,8 +12,10 @@ import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import dimensions from '../constants/dimensions';
 import { getSession } from '../database/localdb';
+import { useTranslation } from 'react-i18next';
 
 const Welcome = () => {
+    const { t } = useTranslation();
     const logoAnim = useRef(new Animated.Value(0)).current;
     const textAnim = useRef(new Animated.Value(0)).current;
     const buttonAnim = useRef(new Animated.Value(0)).current;
@@ -111,10 +113,10 @@ const Welcome = () => {
                 ]}
             >
                 <Text style={styles.title}>
-                    <Text style={styles.titleOrange}>Kisan Dada</Text>
+                    <Text style={styles.titleOrange}>{t('Kisan Dada')}</Text>
                 </Text>
                 <Text style={styles.subtitle}>
-                    Guiding Farmers with the Power of Intelligence.
+                    {t('Guiding Farmers with the Power of Intelligence.')}
                 </Text>
             </Animated.View>
 
@@ -135,7 +137,7 @@ const Welcome = () => {
                 ]}
             >
                 <TouchableOpacity style={styles.button} onPress={redirect} activeOpacity={0.82}>
-                    <Text style={styles.buttonText}>Get Started</Text>
+                    <Text style={styles.buttonText}>{t('Get Started')}</Text>
                     <View style={styles.iconCircle}>
                         <AntDesign name="arrowright" size={24} color="#367165" />
                     </View>

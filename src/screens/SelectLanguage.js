@@ -11,25 +11,33 @@ import {
     Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+import i18n from '../locales/i18n';
 
 const { width, height } = Dimensions.get('window');
-const IMAGE_HEIGHT = height * 0.55; // Taller image for more coverage
-const languages = ['English', 'Hindi', 'Kannada'];
+const IMAGE_HEIGHT = height * 0.55; 
+const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'hi', name: 'Hindi' },
+    // { code: 'kn', name: 'Kannada' },
+];
 
 const SelectLanguage = () => {
     const navigation = useNavigation();
-    const [selectedLanguage, setSelectedLanguage] = useState('English');
+    const { t } = useTranslation();
+    const [selectedLanguage, setSelectedLanguage] = useState('en');
 
     const handleLanguageSelect = (language) => {
-        setSelectedLanguage(language);
-        navigation.navigate("Chatbot"); // Uncomment to navigate on selection
+        setSelectedLanguage(language.code);
+        i18n.changeLanguage(language.code);
+        navigation.navigate("Chatbot");
     };
 
     const renderLanguageButton = ({ item }) => (
         <TouchableOpacity
             style={[
                 styles.languageButton,
-                selectedLanguage === item && styles.selectedButton
+                selectedLanguage === item.code && styles.selectedButton
             ]}
             onPress={() => handleLanguageSelect(item)}
             activeOpacity={0.9}
@@ -37,10 +45,10 @@ const SelectLanguage = () => {
             <Text
                 style={[
                     styles.buttonText,
-                    selectedLanguage === item && styles.selectedButtonText
+                    selectedLanguage === item.code && styles.selectedButtonText
                 ]}
             >
-                {item}
+                {item.name}
             </Text>
         </TouchableOpacity>
     );
@@ -48,23 +56,21 @@ const SelectLanguage = () => {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-            {/* IMAGE WITH WELCOME TEXT INSIDE */}
             <ImageBackground
                 source={require('../../assets/welcome.jpeg')}
                 style={styles.backgroundImage}
             >
                 <View style={styles.textOnImage}>
-                    <Text style={styles.welcomeText}>WELCOME</Text>
-                    <Text style={styles.letsGetStartedText}>Let's Get Started</Text>
+                    <Text style={styles.welcomeText}>{t('Welcome')}</Text>
+                    <Text style={styles.letsGetStartedText}>{t("Let's Get Started")}</Text>
                 </View>
             </ImageBackground>
 
-            {/* WHITE BOTTOM SHEET */}
             <View style={styles.bottomSheet}>
-                <Text style={styles.chooseLanguageText}>Choose Language</Text>
+                <Text style={styles.chooseLanguageText}>{t('Choose Language')}</Text>
                 <FlatList
                     data={languages}
-                    keyExtractor={(item) => item}
+                    keyExtractor={(item) => item.code}
                     renderItem={renderLanguageButton}
                     contentContainerStyle={styles.languageList}
                     showsVerticalScrollIndicator={false}
@@ -77,7 +83,7 @@ const SelectLanguage = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'white', // NO GREEN background here!
+        backgroundColor: 'white',
     },
     backgroundImage: {
         width: '100%',
@@ -87,7 +93,7 @@ const styles = StyleSheet.create({
     },
     textOnImage: {
         position: 'absolute',
-        bottom: Platform.OS === 'ios' ? 28 : 16, // a bit above the bottom of image
+        bottom: Platform.OS === 'ios' ? 28 : 16,
         left: width * 0.06,
         zIndex: 2,
     },

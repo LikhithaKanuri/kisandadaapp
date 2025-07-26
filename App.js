@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import AppNavigator from './src/navigation/AppNavigator';
+import './src/locales/i18n';
 import { init } from './src/database/localdb';
-import { ActivityIndicator, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 export default function App() {
   const [dbInitialized, setDbInitialized] = useState(false);
@@ -10,17 +11,17 @@ export default function App() {
     init()
       .then(() => {
         setDbInitialized(true);
+        console.log('Database initialized');
       })
       .catch((err) => {
-        console.log('Database initialization failed');
-        console.log(err);
+        console.error('Database initialization failed', err);
       });
   }, []);
 
   if (!dbInitialized) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
+        <Text>Initializing database...</Text>
       </View>
     );
   }

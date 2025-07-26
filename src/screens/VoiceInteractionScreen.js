@@ -9,11 +9,13 @@ import {
   Dimensions
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 
 const { width, height } = Dimensions.get('window');
 
 const VoiceInteractionScreen = () => {
-  const [message, setMessage] = useState('Calling Dadaji...');
+  const { t } = useTranslation();
+  const [message, setMessage] = useState(t('Calling Dadaji...'));
   const [timer, setTimer] = useState(0);
   const navigation = useNavigation();
 
@@ -57,33 +59,33 @@ const VoiceInteractionScreen = () => {
       <View style={styles.container}>
         {/* Calling Interface */}
         <View style={styles.callingInterface}>
-          <Text style={styles.callingText}>{message === 'Calling Dadaji...' ? message : formatTime()}</Text>
+          <Text style={styles.callingText}>{message === t('Calling Dadaji...') ? message : formatTime()}</Text>
           <Image
             source={require('../../assets/profile.png')} // Replace with actual contact image
             style={styles.contactImage}
           />
-          <Text style={styles.contactName}>Dadaji</Text>
+          <Text style={styles.contactName}>{t('Dadaji')}</Text>
         </View>
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.button}>
             <Image source={require('../../assets/mic.png')} style={styles.buttonIcon} />
-            <Text style={styles.buttonText}>Mute</Text>
+            <Text style={styles.buttonText}>{t('Mute')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={handleEndCall}>
             <Image source={require('../../assets/chat.png')} style={styles.buttonIcon} />
-            <Text style={styles.buttonText}>Chat</Text>
+            <Text style={styles.buttonText}>{t('Chat')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}  onPress={handleOptionsRoute}>
             <Image source={require('../../assets/settings.png')} style={styles.buttonIcon} />
-            <Text style={styles.buttonText}>Settings</Text>
+            <Text style={styles.buttonText}>{t('Settings')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* End Call Button */}
         <TouchableOpacity style={styles.endCallButton} onPress={handleEndCall}>
-          <Text style={styles.endCallButtonText}>End Call</Text>
+          <Text style={styles.endCallButtonText}>{t('End Call')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

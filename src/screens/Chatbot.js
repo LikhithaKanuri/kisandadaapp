@@ -17,6 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { AntDesign } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import * as ImagePicker from 'expo-image-picker';
+import { useTranslation } from 'react-i18next';
 
 const { width, height } = Dimensions.get('window');
 
@@ -53,6 +54,7 @@ const TypingIndicator = () => {
 };
 
 const Chatbot = () => {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +68,7 @@ const Chatbot = () => {
     (async () => {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        alert('Sorry, we need camera permissions to make this work!');
+        alert(t('Sorry, we need camera permissions to make this work!'));
       }
     })();
   }, []);
@@ -99,7 +101,7 @@ const Chatbot = () => {
 
   const handleCamera = async () => {
     let result = await ImagePicker.launchCameraAsync({
-      allowsEditing: false, // Set to false to prevent cropping
+      allowsEditing: false, 
       quality: 1,
     });
 
@@ -129,9 +131,9 @@ const Chatbot = () => {
     setTimeout(() => {
       const botMessage = {
         id: Date.now() + 1,
-        text: `This is a simulated response to: "${newMessage.text}"`,
+        text: `${t('This is a simulated response to:')} "${newMessage.text}"`,
         sender: 'bot',
-        feedback: null, // Initial feedback state
+        feedback: null, 
       };
       setMessages((prev) => [...prev, botMessage]);
       setIsLoading(false);
@@ -157,9 +159,9 @@ const Chatbot = () => {
   };
 
   const suggestedQuestions = [
-    'What are the best practices for growing wheat, from soil preparation to harvest?',
-    'How do I manage common diseases like powdery mildew in crops like wheat?',
-    'When and how should I fertilize sugarcane during the growing season?',
+    t('What are the best practices for growing wheat, from soil preparation to harvest?'),
+    t('How do I manage common diseases like powdery mildew in crops like wheat?'),
+    t('When and how should I fertilize sugarcane during the growing season?'),
   ];
 
   const renderSuggestedQuestion = ({ item }) => (
@@ -254,7 +256,7 @@ const Chatbot = () => {
         {/* Info note */}
         <Text style={styles.infoNote}>
           <Text style={{ fontSize: width * 0.027 }}>ⓘ </Text>
-          AI-generated content. Please verify information independently.
+          {t('AI-generated content. Please verify information independently.')}
         </Text>
 
         {/* Chat input */}
@@ -263,7 +265,7 @@ const Chatbot = () => {
             style={styles.input}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="Ask your question..."
+            placeholder={t("Ask your question...")}
             placeholderTextColor="#C0C0C0"
           />
           <TouchableOpacity style={styles.inputIconButton} onPress={handleSend}>

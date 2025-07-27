@@ -12,6 +12,7 @@ import {
   Image,
   SafeAreaView,
   Animated,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { AntDesign } from '@expo/vector-icons';
@@ -20,6 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { getLanguage } from '../database/localdb';
 import axios from 'axios';
+import * as Location from 'expo-location';
 
 const { width, height } = Dimensions.get('window');
 
@@ -85,6 +87,7 @@ const Chatbot = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(null);
   const [image, setImage] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
   const navigation = useNavigation();
   const flatListRef = useRef(null);
 
@@ -94,6 +97,12 @@ const Chatbot = () => {
       if (status !== 'granted') {
         alert(t('Sorry, we need camera permissions to make this work!'));
       }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      await Location.requestForegroundPermissionsAsync();
     })();
   }, []);
 
@@ -125,12 +134,25 @@ const Chatbot = () => {
     if (!result.canceled) setImage(result.assets[0].uri);
   };
 
+  const fetchSuggestions = async (query) => {
+    try {
+      const lang = await getLanguage();
+      const url = `https://kissan-dada.kenpath.ai/suggest/?query=${encodeURIComponent(query)}&target_lang=${lang || 'en'}`;
+      const response = await axios.get(url);
+      setSuggestions(response.data.suggestions || []);
+    } catch (error) {
+      console.error('Failed to fetch suggestions:', error);
+      setSuggestions([]);
+    }
+  };
+
   const handleSend = async () => {
     if ((inputText.trim() === '' && !image) || isLoading) return;
 
+    const userQuery = inputText.trim();
     const newMessage = {
       id: Date.now(),
-      text: inputText.trim(),
+      text: userQuery,
       sender: 'user',
       imageUri: image,
     };
@@ -138,11 +160,27 @@ const Chatbot = () => {
     setInputText('');
     setImage(null);
     setIsLoading(true);
+    setSuggestions([]);
 
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
+    let lat = '';
+    let lon = '';
+    try {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const location = await Location.getCurrentPositionAsync({});
+        console.log("location: ", location);
+        lat = location.coords.latitude;
+        lon = location.coords.longitude;
+      }
+    } catch (e) {
+      console.error("Could not get location", e)
+    }
+    console.log("lat: ",lat);
+    console.log("lon: ", lon);
     const lang = await getLanguage();
-    const url = `https://kissan-dada.kenpath.ai/chat/?query=${encodeURIComponent(newMessage.text)}&target_lang=${lang || 'en'}`;
+    const url = `https://kissan-dada.kenpath.ai/chat/?query=${encodeURIComponent(userQuery)}&target_lang=${lang || 'en'}&lat=${lat}&lon=${lon}`;
 
     try {
       const response = await axios.get(url, { responseType: 'text' });
@@ -159,6 +197,7 @@ const Chatbot = () => {
         animated: true,
       };
       setMessages(prev => [...prev, botMessage]);
+      // fetchSuggestions(userQuery);
     } catch (error) {
       console.error('Axios error:', error);
       const errorMessage = {
@@ -187,13 +226,13 @@ const Chatbot = () => {
     });
   };
 
-  const suggestedQuestions = [
+  const initialSuggestedQuestions = [
     t('What are the best practices for growing wheat, from soil preparation to harvest?'),
     t('How do I manage common diseases like powdery mildew in crops like wheat?'),
     t('When and how should I fertilize sugarcane during the growing season?'),
   ];
 
-  const renderSuggestedQuestion = ({ item }) => (
+  const renderInitialSuggestedQuestion = ({ item }) => (
     <TouchableOpacity style={styles.suggestedQuestionButton} onPress={() => handleSelectQuestion(item)}>
       <Text style={styles.suggestedQuestionText}>{item}</Text>
     </TouchableOpacity>
@@ -217,7 +256,7 @@ const Chatbot = () => {
           )
         )}
       </View>
-      {item.sender === 'bot' && (
+      {item.sender === 'bot' && !item.animated && (
         <View style={styles.iconActions}>
           <TouchableOpacity onPress={() => handleSpeak(item.text)}>
             <AntDesign name="sound" size={22} color={isSpeaking ? '#F7CB46' : '#E0E0E0'} style={styles.actionIcon} />
@@ -261,8 +300,8 @@ const Chatbot = () => {
         <View style={styles.contentArea}>
           {messages.length === 0 ? (
             <FlatList
-              data={suggestedQuestions}
-              renderItem={renderSuggestedQuestion}
+              data={initialSuggestedQuestions}
+              renderItem={renderInitialSuggestedQuestion}
               keyExtractor={(item, idx) => `sq-${idx}`}
               contentContainerStyle={styles.suggestedQuestionsContent}
               showsVerticalScrollIndicator={false}
@@ -291,6 +330,22 @@ const Chatbot = () => {
             <TouchableOpacity style={styles.removeImageButton} onPress={() => setImage(null)}>
               <AntDesign name="closecircle" size={24} color="white" />
             </TouchableOpacity>
+          </View>
+        )}
+
+        {suggestions.length > 0 && (
+          <View style={styles.suggestionSlider}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {suggestions.map((suggestion, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.suggestionChip}
+                  onPress={() => handleSelectQuestion(suggestion)}
+                >
+                  <Text style={styles.suggestionChipText}>{suggestion}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         )}
 
@@ -467,6 +522,20 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     textAlign: 'center',
     marginVertical: height * 0.01,
+  },
+  suggestionSlider: {
+    paddingVertical: 10,
+  },
+  suggestionChip: {
+    backgroundColor: darkGreen,
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    marginHorizontal: 5,
+  },
+  suggestionChipText: {
+    color: '#fff',
+    fontSize: 14,
   },
   inputArea: {
     width: width * 0.93,

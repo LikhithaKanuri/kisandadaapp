@@ -256,7 +256,7 @@ const Chatbot = () => {
           )
         )}
       </View>
-      {item.sender === 'bot' && !item.animated && (
+      {item.sender === 'bot' && (
         <View style={styles.iconActions}>
           <TouchableOpacity onPress={() => handleSpeak(item.text)}>
             <AntDesign name="sound" size={22} color={isSpeaking ? '#F7CB46' : '#E0E0E0'} style={styles.actionIcon} />
